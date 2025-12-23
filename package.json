@@ -1,0 +1,16 @@
+{
+  "name": "storium",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Monorepo for Storium app (mobile + backend + shared)",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "bootstrap": "pnpm install",
+    "build": "pnpm -w -r run build",
+    "lint": "pnpm -w -r run lint",
+    "format": "pnpm -w -r run format",
+    "start": "echo \"Run package scripts\""
+  }
+}
