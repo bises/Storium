@@ -1,4 +1,4 @@
-// Prisma Schema for Multi-User Home Inventory App
+// Prisma Schema for Storium V1 - Multi-User Home/Lab Inventory System
 // Supports hierarchical locations, multi-method identifiers, audit trails, and future extensibility
 
 generator client {
@@ -13,87 +13,93 @@ datasource db {
 // CORE ENTITIES
 // ============================================================================
 
-model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  password_hash String
-  name          String
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
+model Space {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
 
-  // Household membership
-  household_id String?
-  household    Household? @relation(fields: [household_id], references: [id], onDelete: SetNull)
+  // Relationships
+  members   Member[]
+  locations Location[]
+  tags      Tag[]
+  items     Item[]
 
-  // Audit trail relationships
-  locations_created  Location[]       @relation("LocationCreatedBy")
-  locations_updated  Location[]       @relation("LocationUpdatedBy")
-  items_created      Item[]           @relation("ItemCreatedBy")
-  items_updated      Item[]           @relation("ItemUpdatedBy")
-  items_moved        Item[]           @relation("ItemLastMovedBy")
-  tags_created       Tag[]            @relation("TagCreatedBy")
-  movement_history   MovementHistory[]
-
-  @@index([household_id])
-  @@index([email])
-  @@map("users")
+  @@index([name])
+  @@map("spaces")
 }
 
-model Household {
-  id         String   @id @default(cuid())
-  name       String
-  address    String?
+model Member {
+  id    String  @id @default(cuid())
+  email String  @unique
+  name  String
+  role  String? // Future: ADMIN, MEMBER, VIEWER
+
+  // Space membership
+  space_id String
+  space    Space  @relation(fields: [space_id], references: [id], onDelete: Cascade)
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  // Relationships
-  members   User[]
-  locations Location[]
-  tags      Tag[]
+  // Audit trail relationships
+  locations_created  Location[]        @relation("LocationCreatedBy")
+  locations_updated  Location[]        @relation("LocationUpdatedBy")
+  items_created      Item[]            @relation("ItemCreatedBy")
+  items_updated      Item[]            @relation("ItemUpdatedBy")
+  items_moved        Item[]            @relation("ItemLastMovedBy")
+  tags_created       Tag[]             @relation("TagCreatedBy")
+  movement_history   MovementHistory[]
 
-  @@map("households")
+  @@index([space_id])
+  @@index([email])
+  @@index([space_id, name])
+  @@map("members")
 }
 
 enum LocationType {
-  HOUSE
+  ROOT
+  FLOOR
   ROOM
   CONTAINER
   OTHER
 }
 
 model Location {
-  id           String        @id @default(cuid())
-  name         String
+  id            String        @id @default(cuid())
+  name          String
   location_type LocationType?
-  
-  // Multi-method identifiers (optional, for scanning)
-  nfc_tag       String?       @unique
-  barcode       String?       @unique
-  qr_code       String?       @unique
-  manual_label  String?
 
-  // Hierarchical structure (self-referencing)
+  // Multi-method identifiers (optional, for scanning)
+  nfc_tag String? @unique
+  barcode String? @unique
+  qr_code String? @unique
+
+  // Hierarchical structure (self-referencing, optional)
   parent_location_id String?
   parent_location    Location?  @relation("LocationHierarchy", fields: [parent_location_id], references: [id], onDelete: Cascade)
   child_locations    Location[] @relation("LocationHierarchy")
 
   // Multi-tenant isolation
-  household_id String
-  household    Household @relation(fields: [household_id], references: [id], onDelete: Cascade)
+  space_id String
+  space    Space  @relation(fields: [space_id], references: [id], onDelete: Cascade)
 
   // Audit fields
   created_by_id String
-  created_by    User     @relation("LocationCreatedBy", fields: [created_by_id], references: [id])
+  created_by    Member  @relation("LocationCreatedBy", fields: [created_by_id], references: [id], onDelete: Restrict)
   updated_by_id String?
-  updated_by    User?    @relation("LocationUpdatedBy", fields: [updated_by_id], references: [id])
-  
+  updated_by    Member? @relation("LocationUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
   // Relationships
-  items Item[]
+  items                      Item[]
+  movement_history_from      MovementHistory[] @relation("MovementFromLocation")
+  movement_history_to        MovementHistory[] @relation("MovementToLocation")
 
-  @@index([household_id])
+  @@index([space_id])
   @@index([parent_location_id])
   @@index([nfc_tag])
   @@index([barcode])
@@ -107,25 +113,29 @@ model Item {
   name        String
   description String?
   quantity    Int     @default(1)
+  image_url   String? // Optional image URL
 
   // Multi-method identifiers (optional, for scanning)
-  nfc_tag      String? @unique
-  barcode      String? @unique
-  qr_code      String? @unique
-  manual_label String?
+  nfc_tag String? @unique
+  barcode String? @unique
+  qr_code String? @unique
 
   // Location
   location_id String
   location    Location @relation(fields: [location_id], references: [id], onDelete: Restrict)
 
+  // Multi-tenant isolation
+  space_id String
+  space    Space  @relation(fields: [space_id], references: [id], onDelete: Cascade)
+
   // Audit fields
-  created_by_id String
-  created_by    User     @relation("ItemCreatedBy", fields: [created_by_id], references: [id])
-  updated_by_id String?
-  updated_by    User?    @relation("ItemUpdatedBy", fields: [updated_by_id], references: [id])
+  created_by_id    String
+  created_by       Member  @relation("ItemCreatedBy", fields: [created_by_id], references: [id], onDelete: Restrict)
+  updated_by_id    String?
+  updated_by       Member? @relation("ItemUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
   last_moved_by_id String?
-  last_moved_by    User?    @relation("ItemLastMovedBy", fields: [last_moved_by_id], references: [id])
-  
+  last_moved_by    Member? @relation("ItemLastMovedBy", fields: [last_moved_by_id], references: [id], onDelete: SetNull)
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
@@ -133,6 +143,7 @@ model Item {
   item_tags        ItemTag[]
   movement_history MovementHistory[]
 
+  @@index([space_id])
   @@index([location_id])
   @@index([nfc_tag])
   @@index([barcode])
@@ -142,32 +153,33 @@ model Item {
 }
 
 model Tag {
-  id       String @id @default(cuid())
-  tag_name String
+  id    String  @id @default(cuid())
+  name  String
+  color String? // Hex color code for UI
 
   // Multi-tenant isolation
-  household_id String
-  household    Household @relation(fields: [household_id], references: [id], onDelete: Cascade)
+  space_id String
+  space    Space  @relation(fields: [space_id], references: [id], onDelete: Cascade)
 
   // Audit fields
   created_by_id String
-  created_by    User     @relation("TagCreatedBy", fields: [created_by_id], references: [id])
-  
+  created_by    Member @relation("TagCreatedBy", fields: [created_by_id], references: [id], onDelete: Restrict)
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
   // Relationships
   item_tags ItemTag[]
 
-  @@unique([household_id, tag_name]) // Tags are unique per household
-  @@index([household_id])
+  @@unique([space_id, name]) // Tags are unique per space
+  @@index([space_id])
   @@map("tags")
 }
 
 model ItemTag {
   item_id String
   item    Item   @relation(fields: [item_id], references: [id], onDelete: Cascade)
-  
+
   tag_id String
   tag    Tag    @relation(fields: [tag_id], references: [id], onDelete: Cascade)
 
@@ -184,15 +196,18 @@ model ItemTag {
 model MovementHistory {
   id String @id @default(cuid())
 
-  item_id        String
-  item           Item     @relation(fields: [item_id], references: [id], onDelete: Cascade)
-  
+  item_id String
+  item    Item   @relation(fields: [item_id], references: [id], onDelete: Cascade)
+
   from_location_id String?
+  from_location    Location? @relation("MovementFromLocation", fields: [from_location_id], references: [id], onDelete: SetNull)
+  
   to_location_id   String
-  
+  to_location      Location  @relation("MovementToLocation", fields: [to_location_id], references: [id], onDelete: Restrict)
+
   moved_by_id String
-  moved_by    User   @relation(fields: [moved_by_id], references: [id])
-  
+  moved_by    Member @relation(fields: [moved_by_id], references: [id], onDelete: Restrict)
+
   moved_at DateTime @default(now())
   notes    String?
 

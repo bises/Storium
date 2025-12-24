@@ -1,28 +1,28 @@
 -- CreateEnum
-CREATE TYPE "LocationType" AS ENUM ('HOUSE', 'ROOM', 'CONTAINER', 'OTHER');
+CREATE TYPE "LocationType" AS ENUM ('ROOT', 'FLOOR', 'ROOM', 'CONTAINER', 'OTHER');
 
 -- CreateTable
-CREATE TABLE "users" (
+CREATE TABLE "spaces" (
     "id" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
-    "password_hash" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "description" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
-    "household_id" TEXT,
 
-    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "spaces_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "households" (
+CREATE TABLE "members" (
     "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "address" TEXT,
+    "role" TEXT,
+    "space_id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "households_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "members_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -33,9 +33,8 @@ CREATE TABLE "locations" (
     "nfc_tag" TEXT,
     "barcode" TEXT,
     "qr_code" TEXT,
-    "manual_label" TEXT,
     "parent_location_id" TEXT,
-    "household_id" TEXT NOT NULL,
+    "space_id" TEXT NOT NULL,
     "created_by_id" TEXT NOT NULL,
     "updated_by_id" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -50,11 +49,12 @@ CREATE TABLE "items" (
     "name" TEXT NOT NULL,
     "description" TEXT,
     "quantity" INTEGER NOT NULL DEFAULT 1,
+    "image_url" TEXT,
     "nfc_tag" TEXT,
     "barcode" TEXT,
     "qr_code" TEXT,
-    "manual_label" TEXT,
     "location_id" TEXT NOT NULL,
+    "space_id" TEXT NOT NULL,
     "created_by_id" TEXT NOT NULL,
     "updated_by_id" TEXT,
     "last_moved_by_id" TEXT,
@@ -67,8 +67,9 @@ CREATE TABLE "items" (
 -- CreateTable
 CREATE TABLE "tags" (
     "id" TEXT NOT NULL,
-    "tag_name" TEXT NOT NULL,
-    "household_id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "color" TEXT,
+    "space_id" TEXT NOT NULL,
     "created_by_id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -99,13 +100,19 @@ CREATE TABLE "movement_history" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+CREATE INDEX "spaces_name_idx" ON "spaces"("name");
 
 -- CreateIndex
-CREATE INDEX "users_household_id_idx" ON "users"("household_id");
+CREATE UNIQUE INDEX "members_email_key" ON "members"("email");
 
 -- CreateIndex
-CREATE INDEX "users_email_idx" ON "users"("email");
+CREATE INDEX "members_space_id_idx" ON "members"("space_id");
+
+-- CreateIndex
+CREATE INDEX "members_email_idx" ON "members"("email");
+
+-- CreateIndex
+CREATE INDEX "members_space_id_name_idx" ON "members"("space_id", "name");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "locations_nfc_tag_key" ON "locations"("nfc_tag");
@@ -117,7 +124,7 @@ CREATE UNIQUE INDEX "locations_barcode_key" ON "locations"("barcode");
 CREATE UNIQUE INDEX "locations_qr_code_key" ON "locations"("qr_code");
 
 -- CreateIndex
-CREATE INDEX "locations_household_id_idx" ON "locations"("household_id");
+CREATE INDEX "locations_space_id_idx" ON "locations"("space_id");
 
 -- CreateIndex
 CREATE INDEX "locations_parent_location_id_idx" ON "locations"("parent_location_id");
@@ -144,6 +151,9 @@ CREATE UNIQUE INDEX "items_barcode_key" ON "items"("barcode");
 CREATE UNIQUE INDEX "items_qr_code_key" ON "items"("qr_code");
 
 -- CreateIndex
+CREATE INDEX "items_space_id_idx" ON "items"("space_id");
+
+-- CreateIndex
 CREATE INDEX "items_location_id_idx" ON "items"("location_id");
 
 -- CreateIndex
@@ -159,10 +169,10 @@ CREATE INDEX "items_qr_code_idx" ON "items"("qr_code");
 CREATE INDEX "items_name_idx" ON "items"("name");
 
 -- CreateIndex
-CREATE INDEX "tags_household_id_idx" ON "tags"("household_id");
+CREATE INDEX "tags_space_id_idx" ON "tags"("space_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "tags_household_id_tag_name_key" ON "tags"("household_id", "tag_name");
+CREATE UNIQUE INDEX "tags_space_id_name_key" ON "tags"("space_id", "name");
 
 -- CreateIndex
 CREATE INDEX "movement_history_item_id_idx" ON "movement_history"("item_id");
@@ -171,37 +181,40 @@ CREATE INDEX "movement_history_item_id_idx" ON "movement_history"("item_id");
 CREATE INDEX "movement_history_moved_at_idx" ON "movement_history"("moved_at");
 
 -- AddForeignKey
-ALTER TABLE "users" ADD CONSTRAINT "users_household_id_fkey" FOREIGN KEY ("household_id") REFERENCES "households"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "members" ADD CONSTRAINT "members_space_id_fkey" FOREIGN KEY ("space_id") REFERENCES "spaces"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "locations" ADD CONSTRAINT "locations_parent_location_id_fkey" FOREIGN KEY ("parent_location_id") REFERENCES "locations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "locations" ADD CONSTRAINT "locations_household_id_fkey" FOREIGN KEY ("household_id") REFERENCES "households"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "locations" ADD CONSTRAINT "locations_space_id_fkey" FOREIGN KEY ("space_id") REFERENCES "spaces"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "locations" ADD CONSTRAINT "locations_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "locations" ADD CONSTRAINT "locations_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "members"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "locations" ADD CONSTRAINT "locations_updated_by_id_fkey" FOREIGN KEY ("updated_by_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "locations" ADD CONSTRAINT "locations_updated_by_id_fkey" FOREIGN KEY ("updated_by_id") REFERENCES "members"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "items" ADD CONSTRAINT "items_location_id_fkey" FOREIGN KEY ("location_id") REFERENCES "locations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "items" ADD CONSTRAINT "items_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "items" ADD CONSTRAINT "items_space_id_fkey" FOREIGN KEY ("space_id") REFERENCES "spaces"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "items" ADD CONSTRAINT "items_updated_by_id_fkey" FOREIGN KEY ("updated_by_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "items" ADD CONSTRAINT "items_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "members"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "items" ADD CONSTRAINT "items_last_moved_by_id_fkey" FOREIGN KEY ("last_moved_by_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "items" ADD CONSTRAINT "items_updated_by_id_fkey" FOREIGN KEY ("updated_by_id") REFERENCES "members"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "tags" ADD CONSTRAINT "tags_household_id_fkey" FOREIGN KEY ("household_id") REFERENCES "households"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "items" ADD CONSTRAINT "items_last_moved_by_id_fkey" FOREIGN KEY ("last_moved_by_id") REFERENCES "members"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "tags" ADD CONSTRAINT "tags_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "tags" ADD CONSTRAINT "tags_space_id_fkey" FOREIGN KEY ("space_id") REFERENCES "spaces"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "tags" ADD CONSTRAINT "tags_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "members"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "item_tags" ADD CONSTRAINT "item_tags_item_id_fkey" FOREIGN KEY ("item_id") REFERENCES "items"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -213,4 +226,10 @@ ALTER TABLE "item_tags" ADD CONSTRAINT "item_tags_tag_id_fkey" FOREIGN KEY ("tag
 ALTER TABLE "movement_history" ADD CONSTRAINT "movement_history_item_id_fkey" FOREIGN KEY ("item_id") REFERENCES "items"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "movement_history" ADD CONSTRAINT "movement_history_moved_by_id_fkey" FOREIGN KEY ("moved_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "movement_history" ADD CONSTRAINT "movement_history_from_location_id_fkey" FOREIGN KEY ("from_location_id") REFERENCES "locations"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "movement_history" ADD CONSTRAINT "movement_history_to_location_id_fkey" FOREIGN KEY ("to_location_id") REFERENCES "locations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "movement_history" ADD CONSTRAINT "movement_history_moved_by_id_fkey" FOREIGN KEY ("moved_by_id") REFERENCES "members"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
