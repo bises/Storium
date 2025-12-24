@@ -1,0 +1,203 @@
+// Prisma Schema for Multi-User Home Inventory App
+// Supports hierarchical locations, multi-method identifiers, audit trails, and future extensibility
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// CORE ENTITIES
+// ============================================================================
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password_hash String
+  name          String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  // Household membership
+  household_id String?
+  household    Household? @relation(fields: [household_id], references: [id], onDelete: SetNull)
+
+  // Audit trail relationships
+  locations_created  Location[]       @relation("LocationCreatedBy")
+  locations_updated  Location[]       @relation("LocationUpdatedBy")
+  items_created      Item[]           @relation("ItemCreatedBy")
+  items_updated      Item[]           @relation("ItemUpdatedBy")
+  items_moved        Item[]           @relation("ItemLastMovedBy")
+  tags_created       Tag[]            @relation("TagCreatedBy")
+  movement_history   MovementHistory[]
+
+  @@index([household_id])
+  @@index([email])
+  @@map("users")
+}
+
+model Household {
+  id         String   @id @default(cuid())
+  name       String
+  address    String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relationships
+  members   User[]
+  locations Location[]
+  tags      Tag[]
+
+  @@map("households")
+}
+
+enum LocationType {
+  HOUSE
+  ROOM
+  CONTAINER
+  OTHER
+}
+
+model Location {
+  id           String        @id @default(cuid())
+  name         String
+  location_type LocationType?
+  
+  // Multi-method identifiers (optional, for scanning)
+  nfc_tag       String?       @unique
+  barcode       String?       @unique
+  qr_code       String?       @unique
+  manual_label  String?
+
+  // Hierarchical structure (self-referencing)
+  parent_location_id String?
+  parent_location    Location?  @relation("LocationHierarchy", fields: [parent_location_id], references: [id], onDelete: Cascade)
+  child_locations    Location[] @relation("LocationHierarchy")
+
+  // Multi-tenant isolation
+  household_id String
+  household    Household @relation(fields: [household_id], references: [id], onDelete: Cascade)
+
+  // Audit fields
+  created_by_id String
+  created_by    User     @relation("LocationCreatedBy", fields: [created_by_id], references: [id])
+  updated_by_id String?
+  updated_by    User?    @relation("LocationUpdatedBy", fields: [updated_by_id], references: [id])
+  
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relationships
+  items Item[]
+
+  @@index([household_id])
+  @@index([parent_location_id])
+  @@index([nfc_tag])
+  @@index([barcode])
+  @@index([qr_code])
+  @@index([name]) // For search optimization
+  @@map("locations")
+}
+
+model Item {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  quantity    Int     @default(1)
+
+  // Multi-method identifiers (optional, for scanning)
+  nfc_tag      String? @unique
+  barcode      String? @unique
+  qr_code      String? @unique
+  manual_label String?
+
+  // Location
+  location_id String
+  location    Location @relation(fields: [location_id], references: [id], onDelete: Restrict)
+
+  // Audit fields
+  created_by_id String
+  created_by    User     @relation("ItemCreatedBy", fields: [created_by_id], references: [id])
+  updated_by_id String?
+  updated_by    User?    @relation("ItemUpdatedBy", fields: [updated_by_id], references: [id])
+  last_moved_by_id String?
+  last_moved_by    User?    @relation("ItemLastMovedBy", fields: [last_moved_by_id], references: [id])
+  
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relationships
+  item_tags        ItemTag[]
+  movement_history MovementHistory[]
+
+  @@index([location_id])
+  @@index([nfc_tag])
+  @@index([barcode])
+  @@index([qr_code])
+  @@index([name]) // For search optimization
+  @@map("items")
+}
+
+model Tag {
+  id       String @id @default(cuid())
+  tag_name String
+
+  // Multi-tenant isolation
+  household_id String
+  household    Household @relation(fields: [household_id], references: [id], onDelete: Cascade)
+
+  // Audit fields
+  created_by_id String
+  created_by    User     @relation("TagCreatedBy", fields: [created_by_id], references: [id])
+  
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relationships
+  item_tags ItemTag[]
+
+  @@unique([household_id, tag_name]) // Tags are unique per household
+  @@index([household_id])
+  @@map("tags")
+}
+
+model ItemTag {
+  item_id String
+  item    Item   @relation(fields: [item_id], references: [id], onDelete: Cascade)
+  
+  tag_id String
+  tag    Tag    @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+
+  created_at DateTime @default(now())
+
+  @@id([item_id, tag_id])
+  @@map("item_tags")
+}
+
+// ============================================================================
+// MOVEMENT TRACKING
+// ============================================================================
+
+model MovementHistory {
+  id String @id @default(cuid())
+
+  item_id        String
+  item           Item     @relation(fields: [item_id], references: [id], onDelete: Cascade)
+  
+  from_location_id String?
+  to_location_id   String
+  
+  moved_by_id String
+  moved_by    User   @relation(fields: [moved_by_id], references: [id])
+  
+  moved_at DateTime @default(now())
+  notes    String?
+
+  @@index([item_id])
+  @@index([moved_at])
+  @@map("movement_history")
+}
