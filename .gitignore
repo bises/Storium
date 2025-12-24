@@ -26,3 +26,4 @@ yarn-error.log*
 
 # VSCode
 .vscode/
+packages/backend/ca-bundle.crt

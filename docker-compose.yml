@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: storium_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: storium_user
+      POSTGRES_PASSWORD: storium_password
+      POSTGRES_DB: storium_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

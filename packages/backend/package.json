@@ -16,14 +16,17 @@
     "@fastify/env": "^5.0.3",
     "@fastify/jwt": "^10.0.0",
     "@fastify/multipart": "^9.3.0",
+    "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.2.0",
     "bcrypt": "^6.0.0",
+    "dotenv": "^17.2.3",
     "fastify": "^4.0.0",
-    "prisma": "^7.2.0",
     "zod": "^4.2.1"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
+    "@types/node": "^25.0.3",
+    "prisma": "^7.2.0",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.0.0"
   }
