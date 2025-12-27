@@ -1,5 +1,9 @@
-import 'dotenv/config'
-import { defineConfig, env } from 'prisma/config'
+import { config } from 'dotenv';
+import { resolve } from 'path';
+import { defineConfig, env } from 'prisma/config';
+
+// Load .env from parent directory (backend folder)
+config({ path: resolve(__dirname, '../.env') });
 
 export default defineConfig({
     schema: 'prisma/schema.prisma',
@@ -9,4 +13,4 @@ export default defineConfig({
     datasource: {
         url: env('DATABASE_URL'),
     },
-})
+});

@@ -26,11 +26,11 @@ export const updateMemberSchema = z.object({
 // Location schemas
 export const createLocationSchema = z.object({
     name: z.string().min(1).max(255),
-    location_type: z.enum(['ROOT', 'FLOOR', 'ROOM', 'CONTAINER', 'OTHER']).optional(),
-    parent_location_id: z.string().optional(),
-    nfc_tag: z.string().optional(),
-    barcode: z.string().optional(),
-    qr_code: z.string().optional(),
+    location_type: z.enum(['ROOT', 'FLOOR', 'ROOM', 'CONTAINER', 'OTHER']).default('OTHER'),
+    parent_location_id: z.string().nullable().optional(),
+    nfc_tag: z.string().nullable().optional(),
+    barcode: z.string().nullable().optional(),
+    qr_code: z.string().nullable().optional(),
     created_by_id: z.string(),
 });
 
@@ -47,13 +47,13 @@ export const updateLocationSchema = z.object({
 // Item schemas
 export const createItemSchema = z.object({
     name: z.string().min(1).max(255),
-    description: z.string().optional(),
+    description: z.string().nullable().optional(),
     quantity: z.number().int().min(0).default(1),
-    image_url: z.string().url().optional(),
+    image_url: z.string().url().nullable().optional(),
     location_id: z.string(),
-    nfc_tag: z.string().optional(),
-    barcode: z.string().optional(),
-    qr_code: z.string().optional(),
+    nfc_tag: z.string().nullable().optional(),
+    barcode: z.string().nullable().optional(),
+    qr_code: z.string().nullable().optional(),
     created_by_id: z.string(),
 });
 

@@ -1,0 +1,503 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2025-12-26T00:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "wrk_storium",
+      "_type": "workspace",
+      "name": "Storium API",
+      "description": "Multi-user family home inventory application API",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_base",
+      "_type": "environment",
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:4000",
+        "space_id": "00000000-0000-0000-0000-000000000001",
+        "item_id": "",
+        "location_id": "",
+        "member_id": "",
+        "tag_id": ""
+      },
+      "parentId": "wrk_storium"
+    },
+    {
+      "_id": "fld_health",
+      "_type": "request_group",
+      "name": "Health",
+      "parentId": "wrk_storium"
+    },
+    {
+      "_id": "req_health_check",
+      "_type": "request",
+      "name": "Health Check",
+      "method": "GET",
+      "url": "{{ _.base_url }}/health",
+      "parentId": "fld_health",
+      "headers": []
+    },
+    {
+      "_id": "fld_spaces",
+      "_type": "request_group",
+      "name": "Spaces",
+      "parentId": "wrk_storium"
+    },
+    {
+      "_id": "req_create_space",
+      "_type": "request",
+      "name": "Create Space",
+      "method": "POST",
+      "url": "{{ _.base_url }}/spaces",
+      "parentId": "fld_spaces",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"My Home\",\n  \"description\": \"Family home inventory\"\n}"
+      }
+    },
+    {
+      "_id": "req_list_spaces",
+      "_type": "request",
+      "name": "List Spaces",
+      "method": "GET",
+      "url": "{{ _.base_url }}/spaces?limit=50&offset=0",
+      "parentId": "fld_spaces",
+      "headers": []
+    },
+    {
+      "_id": "req_get_space",
+      "_type": "request",
+      "name": "Get Space",
+      "method": "GET",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}",
+      "parentId": "fld_spaces",
+      "headers": []
+    },
+    {
+      "_id": "req_update_space",
+      "_type": "request",
+      "name": "Update Space",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}",
+      "parentId": "fld_spaces",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Updated Home Name\",\n  \"description\": \"Updated description\"\n}"
+      }
+    },
+    {
+      "_id": "req_delete_space",
+      "_type": "request",
+      "name": "Delete Space",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}",
+      "parentId": "fld_spaces",
+      "headers": []
+    },
+    {
+      "_id": "fld_locations",
+      "_type": "request_group",
+      "name": "Locations",
+      "parentId": "wrk_storium"
+    },
+    {
+      "_id": "req_create_location",
+      "_type": "request",
+      "name": "Create Location",
+      "method": "POST",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/locations",
+      "parentId": "fld_locations",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Kitchen\",\n  \"location_type\": \"room\",\n  \"description\": \"Main kitchen area\",\n  \"parent_location_id\": null,\n  \"nfc_tag\": null,\n  \"qr_code\": null,\n  \"barcode\": null,\n  \"created_by_id\": \"00000000-0000-0000-0000-000000000001\"\n}"
+      }
+    },
+    {
+      "_id": "req_list_locations",
+      "_type": "request",
+      "name": "List Locations",
+      "method": "GET",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/locations",
+      "parentId": "fld_locations",
+      "headers": []
+    },
+    {
+      "_id": "req_list_locations_filtered",
+      "_type": "request",
+      "name": "List Locations (Filtered)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/locations?parent_location_id={{ _.location_id }}&location_type=room",
+      "parentId": "fld_locations",
+      "headers": []
+    },
+    {
+      "_id": "req_get_location",
+      "_type": "request",
+      "name": "Get Location",
+      "method": "GET",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/locations/{{ _.location_id }}",
+      "parentId": "fld_locations",
+      "headers": []
+    },
+    {
+      "_id": "req_scan_location",
+      "_type": "request",
+      "name": "Scan Location by Identifier",
+      "method": "GET",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/locations/scan/NFC123456",
+      "parentId": "fld_locations",
+      "headers": []
+    },
+    {
+      "_id": "req_update_location",
+      "_type": "request",
+      "name": "Update Location",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/locations/{{ _.location_id }}",
+      "parentId": "fld_locations",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Updated Kitchen\",\n  \"description\": \"Updated kitchen description\"\n}"
+      }
+    },
+    {
+      "_id": "req_delete_location",
+      "_type": "request",
+      "name": "Delete Location",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/locations/{{ _.location_id }}",
+      "parentId": "fld_locations",
+      "headers": []
+    },
+    {
+      "_id": "fld_items",
+      "_type": "request_group",
+      "name": "Items",
+      "parentId": "wrk_storium"
+    },
+    {
+      "_id": "req_create_item",
+      "_type": "request",
+      "name": "Create Item",
+      "method": "POST",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/items",
+      "parentId": "fld_items",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Coffee Maker\",\n  \"description\": \"Breville espresso machine\",\n  \"quantity\": 1,\n  \"location_id\": \"00000000-0000-0000-0000-000000000001\",\n  \"nfc_tag\": null,\n  \"qr_code\": null,\n  \"barcode\": null,\n  \"photo_url\": null,\n  \"created_by_id\": \"00000000-0000-0000-0000-000000000001\"\n}"
+      }
+    },
+    {
+      "_id": "req_list_items",
+      "_type": "request",
+      "name": "List Items",
+      "method": "GET",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/items?limit=50&offset=0",
+      "parentId": "fld_items",
+      "headers": []
+    },
+    {
+      "_id": "req_list_items_by_location",
+      "_type": "request",
+      "name": "List Items by Location",
+      "method": "GET",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/items?location_id={{ _.location_id }}",
+      "parentId": "fld_items",
+      "headers": []
+    },
+    {
+      "_id": "req_list_items_by_tag",
+      "_type": "request",
+      "name": "List Items by Tag",
+      "method": "GET",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/items?tag_id={{ _.tag_id }}",
+      "parentId": "fld_items",
+      "headers": []
+    },
+    {
+      "_id": "req_search_items",
+      "_type": "request",
+      "name": "Search Items",
+      "method": "GET",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/items?search=coffee",
+      "parentId": "fld_items",
+      "headers": []
+    },
+    {
+      "_id": "req_get_item",
+      "_type": "request",
+      "name": "Get Item",
+      "method": "GET",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/items/{{ _.item_id }}",
+      "parentId": "fld_items",
+      "headers": []
+    },
+    {
+      "_id": "req_scan_item",
+      "_type": "request",
+      "name": "Scan Item by Identifier",
+      "method": "GET",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/items/scan/NFC123456",
+      "parentId": "fld_items",
+      "headers": []
+    },
+    {
+      "_id": "req_update_item",
+      "_type": "request",
+      "name": "Update Item",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/items/{{ _.item_id }}",
+      "parentId": "fld_items",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Updated Coffee Maker\",\n  \"description\": \"Breville espresso machine - updated\",\n  \"quantity\": 1\n}"
+      }
+    },
+    {
+      "_id": "req_move_item",
+      "_type": "request",
+      "name": "Move Item",
+      "method": "POST",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/items/{{ _.item_id }}/move",
+      "parentId": "fld_items",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"to_location_id\": \"00000000-0000-0000-0000-000000000002\",\n  \"moved_by_id\": \"00000000-0000-0000-0000-000000000001\",\n  \"notes\": \"Moving to pantry for storage\"\n}"
+      }
+    },
+    {
+      "_id": "req_delete_item",
+      "_type": "request",
+      "name": "Delete Item",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/items/{{ _.item_id }}",
+      "parentId": "fld_items",
+      "headers": []
+    },
+    {
+      "_id": "fld_members",
+      "_type": "request_group",
+      "name": "Members",
+      "parentId": "wrk_storium"
+    },
+    {
+      "_id": "req_create_member",
+      "_type": "request",
+      "name": "Create Member",
+      "method": "POST",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/members",
+      "parentId": "fld_members",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"SecurePassword123!\",\n  \"role\": \"member\"\n}"
+      }
+    },
+    {
+      "_id": "req_list_members",
+      "_type": "request",
+      "name": "List Members",
+      "method": "GET",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/members",
+      "parentId": "fld_members",
+      "headers": []
+    },
+    {
+      "_id": "req_get_member",
+      "_type": "request",
+      "name": "Get Member",
+      "method": "GET",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/members/{{ _.member_id }}",
+      "parentId": "fld_members",
+      "headers": []
+    },
+    {
+      "_id": "req_update_member",
+      "_type": "request",
+      "name": "Update Member",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/members/{{ _.member_id }}",
+      "parentId": "fld_members",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"John Updated\",\n  \"role\": \"admin\"\n}"
+      }
+    },
+    {
+      "_id": "req_delete_member",
+      "_type": "request",
+      "name": "Delete Member",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/members/{{ _.member_id }}",
+      "parentId": "fld_members",
+      "headers": []
+    },
+    {
+      "_id": "fld_tags",
+      "_type": "request_group",
+      "name": "Tags",
+      "parentId": "wrk_storium"
+    },
+    {
+      "_id": "req_create_tag",
+      "_type": "request",
+      "name": "Create Tag",
+      "method": "POST",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/tags",
+      "parentId": "fld_tags",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Electronics\",\n  \"color\": \"#3498db\"\n}"
+      }
+    },
+    {
+      "_id": "req_list_tags",
+      "_type": "request",
+      "name": "List Tags",
+      "method": "GET",
+      "url": "{{ _.base_url }}/{{ _.space_id }}/tags",
+      "parentId": "fld_tags",
+      "headers": []
+    },
+    {
+      "_id": "req_delete_tag",
+      "_type": "request",
+      "name": "Delete Tag",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/tags/{{ _.tag_id }}",
+      "parentId": "fld_tags",
+      "headers": []
+    },
+    {
+      "_id": "req_assign_tag_to_item",
+      "_type": "request",
+      "name": "Assign Tag to Item",
+      "method": "POST",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/items/{{ _.item_id }}/tags",
+      "parentId": "fld_tags",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"tag_id\": \"00000000-0000-0000-0000-000000000001\"\n}"
+      }
+    },
+    {
+      "_id": "req_remove_tag_from_item",
+      "_type": "request",
+      "name": "Remove Tag from Item",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/items/{{ _.item_id }}/tags/{{ _.tag_id }}",
+      "parentId": "fld_tags",
+      "headers": []
+    },
+    {
+      "_id": "fld_movement_history",
+      "_type": "request_group",
+      "name": "Movement History",
+      "parentId": "wrk_storium"
+    },
+    {
+      "_id": "req_get_item_history",
+      "_type": "request",
+      "name": "Get Item Movement History",
+      "method": "GET",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/items/{{ _.item_id }}/history?limit=50&offset=0",
+      "parentId": "fld_movement_history",
+      "headers": []
+    },
+    {
+      "_id": "req_get_space_history",
+      "_type": "request",
+      "name": "Get Space Movement History",
+      "method": "GET",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/history?limit=50&offset=0",
+      "parentId": "fld_movement_history",
+      "headers": []
+    },
+    {
+      "_id": "req_get_space_history_by_location",
+      "_type": "request",
+      "name": "Get Movement History by Location",
+      "method": "GET",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/history?location_id={{ _.location_id }}",
+      "parentId": "fld_movement_history",
+      "headers": []
+    },
+    {
+      "_id": "req_get_space_history_by_member",
+      "_type": "request",
+      "name": "Get Movement History by Member",
+      "method": "GET",
+      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/history?member_id={{ _.member_id }}",
+      "parentId": "fld_movement_history",
+      "headers": []
+    }
+  ]
+}

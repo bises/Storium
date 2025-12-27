@@ -82,3 +82,33 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 npx prisma [command]
 ### Database Connection Issues
 
 Verify your `DATABASE_URL` in `.env` is correct and PostgreSQL is running.
+
+## Module System
+
+This project uses **CommonJS** (`module: "CommonJS"` in tsconfig.json).
+
+### Why CommonJS?
+
+- ✅ No file extension confusion (`.js` not required in imports)
+- ✅ Better Node.js compatibility out of the box
+- ✅ Simpler setup and debugging
+- ✅ Works seamlessly with Prisma and Fastify
+
+### ES Modules vs CommonJS
+
+**CommonJS (Current):**
+
+```typescript
+import express from "express";
+import { myFunction } from "./myModule"; // No .js needed
+```
+
+**ES Modules (Alternative):**
+
+```typescript
+import express from "express";
+import { myFunction } from "./myModule.js"; // .js required!
+// Also requires "type": "module" in package.json
+```
+
+**Recommendation:** Stick with CommonJS for backend projects unless you have specific needs for ES Modules (tree-shaking, browser compatibility).
