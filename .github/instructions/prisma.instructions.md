@@ -78,7 +78,7 @@ npx prisma generate --schema ./packages/backend/prisma/schema.prisma
 
 ```bash
 cd /path/to/Storium
-npx prisma migrate dev --name descriptive_name --schema ./packages/backend/prisma/schema.prisma
+npx prisma migrate dev --name descriptive_name --schema ./packages/backend/prisma/schema.prisma --config ./prisma/prisma.config
 ```
 
 ### Open Prisma Studio

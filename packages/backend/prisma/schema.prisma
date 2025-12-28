@@ -13,49 +13,76 @@ datasource db {
 // CORE ENTITIES
 // ============================================================================
 
+model Member {
+  id       String   @id @default(cuid())
+  email    String   @unique
+  name     String
+  password String   // For authentication (will be hashed)
+  
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Space relationships (many-to-many through SpaceMembership)
+  owned_spaces      Space[]           @relation("SpaceOwner")
+  space_memberships SpaceMembership[]
+
+  // Audit trail relationships
+  locations_created Location[]        @relation("LocationCreatedBy")
+  locations_updated Location[]        @relation("LocationUpdatedBy")
+  items_created     Item[]            @relation("ItemCreatedBy")
+  items_updated     Item[]            @relation("ItemUpdatedBy")
+  items_moved       Item[]            @relation("ItemLastMovedBy")
+  tags_created      Tag[]             @relation("TagCreatedBy")
+  movement_history  MovementHistory[]
+
+  @@index([email])
+  @@map("members")
+}
+
 model Space {
   id          String   @id @default(cuid())
   name        String
   description String?
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-
-  // Relationships
-  members   Member[]
-  locations Location[]
-  tags      Tag[]
-  items     Item[]
-
-  @@index([name])
-  @@map("spaces")
-}
-
-model Member {
-  id    String  @id @default(cuid())
-  email String  @unique
-  name  String
-  role  String? // Future: ADMIN, MEMBER, VIEWER
-
-  // Space membership
-  space_id String
-  space    Space  @relation(fields: [space_id], references: [id], onDelete: Cascade)
-
+  
+  // Owner of the space
+  owner_id String
+  owner    Member @relation("SpaceOwner", fields: [owner_id], references: [id], onDelete: Cascade)
+  
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  // Audit trail relationships
-  locations_created  Location[]        @relation("LocationCreatedBy")
-  locations_updated  Location[]        @relation("LocationUpdatedBy")
-  items_created      Item[]            @relation("ItemCreatedBy")
-  items_updated      Item[]            @relation("ItemUpdatedBy")
-  items_moved        Item[]            @relation("ItemLastMovedBy")
-  tags_created       Tag[]             @relation("TagCreatedBy")
-  movement_history   MovementHistory[]
+  // Relationships
+  memberships SpaceMembership[]
+  locations   Location[]
+  tags        Tag[]
+  items       Item[]
 
+  @@index([name])
+  @@index([owner_id])
+  @@map("spaces")
+}
+
+model SpaceMembership {
+  member_id String
+  member    Member @relation(fields: [member_id], references: [id], onDelete: Cascade)
+  
+  space_id String
+  space    Space  @relation(fields: [space_id], references: [id], onDelete: Cascade)
+  
+  role       String   @default("MEMBER") // ADMIN, MEMBER, VIEWER
+  joined_at  DateTime @default(now())
+  
+  @@id([member_id, space_id])
+  @@index([member_id])
   @@index([space_id])
-  @@index([email])
-  @@index([space_id, name])
-  @@map("members")
+  @@map("space_memberships")
+}
+
+enum ReferenceType {
+  NFC
+  QR_CODE
+  BARCODE
+  MANUAL
 }
 
 enum LocationType {
@@ -71,10 +98,9 @@ model Location {
   name          String
   location_type LocationType?
 
-  // Multi-method identifiers (optional, for scanning)
-  nfc_tag String? @unique
-  barcode String? @unique
-  qr_code String? @unique
+  // Single identifier for scanning (NFC, QR, Barcode, or Manual)
+  location_reference_id String?        @unique
+  reference_type        ReferenceType?
 
   // Hierarchical structure (self-referencing, optional)
   parent_location_id String?
@@ -101,9 +127,7 @@ model Location {
 
   @@index([space_id])
   @@index([parent_location_id])
-  @@index([nfc_tag])
-  @@index([barcode])
-  @@index([qr_code])
+  @@index([location_reference_id])
   @@index([name]) // For search optimization
   @@map("locations")
 }
@@ -115,10 +139,9 @@ model Item {
   quantity    Int     @default(1)
   image_url   String? // Optional image URL
 
-  // Multi-method identifiers (optional, for scanning)
-  nfc_tag String? @unique
-  barcode String? @unique
-  qr_code String? @unique
+  // Single identifier for scanning (NFC, QR, Barcode, or Manual)
+  item_reference_id String?        @unique
+  reference_type    ReferenceType?
 
   // Location
   location_id String
@@ -145,9 +168,7 @@ model Item {
 
   @@index([space_id])
   @@index([location_id])
-  @@index([nfc_tag])
-  @@index([barcode])
-  @@index([qr_code])
+  @@index([item_reference_id])
   @@index([name]) // For search optimization
   @@map("items")
 }

@@ -27,39 +27,43 @@ const locationRoutes: FastifyPluginAsync = async (server) => {
     server.post<{ Params: { spaceId: string } }>(
         '/:spaceId/locations',
         async (request, reply) => {
-            const { spaceId } = request.params;
-            const body = createLocationSchema.parse(request.body);
+            try {
+                const { spaceId } = request.params;
+                const body = createLocationSchema.parse(request.body);
 
-            // Verify space exists
-            const space = await prisma.space.findUnique({
-                where: { id: spaceId },
-            });
+                // Verify space exists
+                const space = await prisma.space.findUnique({
+                    where: { id: spaceId },
+                });
 
-            if (!space) {
-                return reply.code(404).send({
-                    success: false,
-                    error: {
-                        code: 'SPACE_NOT_FOUND',
-                        message: 'Space not found',
+                if (!space) {
+                    return reply.code(404).send({
+                        success: false,
+                        error: {
+                            code: 'SPACE_NOT_FOUND',
+                            message: 'Space not found',
+                        },
+                    });
+                }
+
+                // TODO: Add authentication middleware to validate created_by_id from JWT token
+                // Currently, created_by_id must be a valid member_id or will throw foreign key constraint error
+                // After auth: created_by_id will come from request.user.memberId automatically
+
+                const location = await prisma.location.create({
+                    data: {
+                        ...body,
+                        space_id: spaceId,
                     },
                 });
+
+                reply.code(201).send({
+                    success: true,
+                    data: location,
+                });
+            } catch (error) {
+                throw error; // Let global error handler format it
             }
-
-            // TODO: Add authentication middleware to validate created_by_id from JWT token
-            // Currently, created_by_id must be a valid member_id or will throw foreign key constraint error
-            // After auth: created_by_id will come from request.user.memberId automatically
-
-            const location = await prisma.location.create({
-                data: {
-                    ...body,
-                    space_id: spaceId,
-                },
-            });
-
-            reply.code(201).send({
-                success: true,
-                data: location,
-            });
         }
     );
 

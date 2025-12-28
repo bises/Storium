@@ -17,10 +17,11 @@
       "name": "Base Environment",
       "data": {
         "base_url": "http://localhost:4000",
-        "space_id": "00000000-0000-0000-0000-000000000001",
+        "space_id": "",
         "item_id": "",
         "location_id": "",
         "member_id": "",
+        "owner_id": "",
         "tag_id": ""
       },
       "parentId": "wrk_storium"
@@ -61,7 +62,7 @@
       ],
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"name\": \"My Home\",\n  \"description\": \"Family home inventory\"\n}"
+        "text": "{\n  \"name\": \"My Home\",\n  \"description\": \"Family home inventory\",\n  \"owner_id\": \"{{ _.owner_id }}\"\n}"
       }
     },
     {
@@ -328,9 +329,9 @@
     {
       "_id": "req_create_member",
       "_type": "request",
-      "name": "Create Member",
+      "name": "Create Member (Signup)",
       "method": "POST",
-      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/members",
+      "url": "{{ _.base_url }}/members",
       "parentId": "fld_members",
       "headers": [
         {
@@ -340,15 +341,15 @@
       ],
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"SecurePassword123!\",\n  \"role\": \"member\"\n}"
+        "text": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"SecurePassword123!\"\n}"
       }
     },
     {
       "_id": "req_list_members",
       "_type": "request",
-      "name": "List Members",
+      "name": "List All Members",
       "method": "GET",
-      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/members",
+      "url": "{{ _.base_url }}/members?limit=50&offset=0",
       "parentId": "fld_members",
       "headers": []
     },
@@ -357,7 +358,7 @@
       "_type": "request",
       "name": "Get Member",
       "method": "GET",
-      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/members/{{ _.member_id }}",
+      "url": "{{ _.base_url }}/members/{{ _.member_id }}",
       "parentId": "fld_members",
       "headers": []
     },
@@ -366,7 +367,7 @@
       "_type": "request",
       "name": "Update Member",
       "method": "PATCH",
-      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/members/{{ _.member_id }}",
+      "url": "{{ _.base_url }}/members/{{ _.member_id }}",
       "parentId": "fld_members",
       "headers": [
         {
@@ -376,7 +377,7 @@
       ],
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"name\": \"John Updated\",\n  \"role\": \"admin\"\n}"
+        "text": "{\n  \"name\": \"John Updated\"\n}"
       }
     },
     {
@@ -384,7 +385,7 @@
       "_type": "request",
       "name": "Delete Member",
       "method": "DELETE",
-      "url": "{{ _.base_url }}/spaces/{{ _.space_id }}/members/{{ _.member_id }}",
+      "url": "{{ _.base_url }}/members/{{ _.member_id }}",
       "parentId": "fld_members",
       "headers": []
     },

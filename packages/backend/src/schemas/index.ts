@@ -4,6 +4,7 @@ import { z } from 'zod';
 export const createSpaceSchema = z.object({
     name: z.string().min(1).max(255),
     description: z.string().optional(),
+    owner_id: z.string(), // Member who creates/owns the space
 });
 
 export const updateSpaceSchema = z.object({
@@ -11,16 +12,21 @@ export const updateSpaceSchema = z.object({
     description: z.string().optional(),
 });
 
-// Member schemas
+// Member schemas (for signup/registration)
 export const createMemberSchema = z.object({
     name: z.string().min(1).max(255),
     email: z.string().email(),
-    role: z.enum(['ADMIN', 'MEMBER', 'VIEWER']).optional(),
+    password: z.string().min(8), // Will be hashed before storing
 });
 
 export const updateMemberSchema = z.object({
     name: z.string().min(1).max(255).optional(),
-    role: z.enum(['ADMIN', 'MEMBER', 'VIEWER']).optional(),
+});
+
+// Space membership schemas (for inviting members to spaces)
+export const addMemberToSpaceSchema = z.object({
+    member_id: z.string(),
+    role: z.enum(['ADMIN', 'MEMBER', 'VIEWER']).default('MEMBER'),
 });
 
 // Location schemas
@@ -28,9 +34,8 @@ export const createLocationSchema = z.object({
     name: z.string().min(1).max(255),
     location_type: z.enum(['ROOT', 'FLOOR', 'ROOM', 'CONTAINER', 'OTHER']).default('OTHER'),
     parent_location_id: z.string().nullable().optional(),
-    nfc_tag: z.string().nullable().optional(),
-    barcode: z.string().nullable().optional(),
-    qr_code: z.string().nullable().optional(),
+    location_reference_id: z.string().nullable().optional(),
+    reference_type: z.enum(['NFC', 'QR_CODE', 'BARCODE', 'MANUAL']).nullable().optional(),
     created_by_id: z.string(),
 });
 
@@ -38,9 +43,8 @@ export const updateLocationSchema = z.object({
     name: z.string().min(1).max(255).optional(),
     location_type: z.enum(['ROOT', 'FLOOR', 'ROOM', 'CONTAINER', 'OTHER']).optional(),
     parent_location_id: z.string().optional().nullable(),
-    nfc_tag: z.string().optional().nullable(),
-    barcode: z.string().optional().nullable(),
-    qr_code: z.string().optional().nullable(),
+    location_reference_id: z.string().optional().nullable(),
+    reference_type: z.enum(['NFC', 'QR_CODE', 'BARCODE', 'MANUAL']).optional().nullable(),
     updated_by_id: z.string().optional(),
 });
 
@@ -51,9 +55,8 @@ export const createItemSchema = z.object({
     quantity: z.number().int().min(0).default(1),
     image_url: z.string().url().nullable().optional(),
     location_id: z.string(),
-    nfc_tag: z.string().nullable().optional(),
-    barcode: z.string().nullable().optional(),
-    qr_code: z.string().nullable().optional(),
+    item_reference_id: z.string().nullable().optional(),
+    reference_type: z.enum(['NFC', 'QR_CODE', 'BARCODE', 'MANUAL']).nullable().optional(),
     created_by_id: z.string(),
 });
 
@@ -62,9 +65,8 @@ export const updateItemSchema = z.object({
     description: z.string().optional().nullable(),
     quantity: z.number().int().min(0).optional(),
     image_url: z.string().url().optional().nullable(),
-    nfc_tag: z.string().optional().nullable(),
-    barcode: z.string().optional().nullable(),
-    qr_code: z.string().optional().nullable(),
+    item_reference_id: z.string().optional().nullable(),
+    reference_type: z.enum(['NFC', 'QR_CODE', 'BARCODE', 'MANUAL']).optional().nullable(),
     updated_by_id: z.string().optional(),
 });
 

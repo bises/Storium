@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import Fastify from 'fastify';
+import { errorHandler } from './middleware/errorHandler';
 import itemRoutes from './modules/items/routes';
 import locationRoutes from './modules/locations/routes';
 import memberRoutes from './modules/members/routes';
@@ -9,17 +10,22 @@ import tagRoutes from './modules/tags/routes';
 
 const server = Fastify({ logger: true });
 
+// Register error handler
+server.setErrorHandler(errorHandler);
+
 // Health check
 server.get('/health', async () => ({ status: 'ok' }));
 
 // Register route modules
 const start = async () => {
   try {
-    // Register all routes
+    // Register member routes at /members
+    await server.register(memberRoutes, { prefix: '/members' });
+
+    // Register all other routes under /spaces
     await server.register(spaceRoutes, { prefix: '/spaces' });
     await server.register(locationRoutes, { prefix: '/spaces' });
     await server.register(itemRoutes, { prefix: '/spaces' });
-    await server.register(memberRoutes, { prefix: '/spaces' });
     await server.register(tagRoutes, { prefix: '/spaces' });
     await server.register(movementHistoryRoutes, { prefix: '/spaces' });
 

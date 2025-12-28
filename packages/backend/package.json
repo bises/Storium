@@ -9,7 +9,10 @@
     "start": "node dist/index.js",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prisma:generate": "prisma generate --schema ./prisma/schema.prisma",
+    "prisma:migrate": "prisma migrate dev --schema ./prisma/schema.prisma --config ./prisma/prisma.config",
+    "prisma:studio": "prisma studio --config ./prisma/prisma.config"
   },
   "dependencies": {
     "@fastify/cors": "^11.2.0",

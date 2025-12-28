@@ -7,8 +7,43 @@ const spaceRoutes: FastifyPluginAsync = async (server) => {
     server.post('/', async (request, reply) => {
         const body = createSpaceSchema.parse(request.body);
 
+        // Verify owner exists
+        const owner = await prisma.member.findUnique({
+            where: { id: body.owner_id },
+        });
+
+        if (!owner) {
+            return reply.code(404).send({
+                success: false,
+                error: {
+                    code: 'OWNER_NOT_FOUND',
+                    message: 'Owner member not found',
+                },
+            });
+        }
+
+        // Create space and automatically add owner as ADMIN member
         const space = await prisma.space.create({
-            data: body,
+            data: {
+                name: body.name,
+                description: body.description,
+                owner_id: body.owner_id,
+                memberships: {
+                    create: {
+                        member_id: body.owner_id,
+                        role: 'ADMIN',
+                    },
+                },
+            },
+            include: {
+                owner: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    },
+                },
+            },
         });
 
         reply.code(201).send({

@@ -11,6 +11,10 @@
     "build": "pnpm -w -r run build",
     "lint": "pnpm -w -r run lint",
     "format": "pnpm -w -r run format",
-    "start": "echo \"Run package scripts\""
+    "start": "cd packages/backend && npm start",
+    "dev": "cd packages/backend && npm run dev",
+    "prisma:generate": "cd packages/backend && npm run prisma:generate",
+    "prisma:migrate": "cd packages/backend && npm run prisma:migrate",
+    "prisma:studio": "cd packages/backend && npm run prisma:studio"
   }
 }
