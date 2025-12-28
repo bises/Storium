@@ -1,14 +1,15 @@
-# Storium (Monorepo)
+# Storium (Backend)
 
-Monorepo skeleton for the Storium app.
+Fastify + TypeScript API for the Storium app.
 
-Structure:
-- packages/backend — Fastify + TypeScript API stub
-- packages/mobile — React Native app stub (TypeScript)
-- packages/shared — shared types/utilities
+Quick start:
+- `npm install`
+- `npm run dev`
+- `npm run build`
 
-Quick commands:
-- `pnpm install` — install dependencies
-- `pnpm -w -r run dev` — run dev scripts (once configured per package)
+Prisma:
+- `npm run prisma:generate`
+- `npm run prisma:migrate`
+- `npm run prisma:studio`
 
-This repository is a starting point; features, DB, and CI will be added next.
+This repository contains only the backend API.
