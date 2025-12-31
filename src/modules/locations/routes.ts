@@ -1,5 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import prisma from '../../db/prisma';
+import type { Prisma, Location } from '@prisma/client';
 import { createLocationSchema, updateLocationSchema } from '../../schemas';
 
 // Helper function to build location path
@@ -88,7 +89,7 @@ const locationRoutes: FastifyPluginAsync = async (server) => {
 
             // Build paths for each location
             const locationsWithPaths = await Promise.all(
-                locations.map(async (loc) => ({
+                locations.map(async (loc: Location) => ({
                     ...loc,
                     path: await buildLocationPath(loc.id),
                 }))
@@ -147,10 +148,10 @@ const locationRoutes: FastifyPluginAsync = async (server) => {
         async (request, reply) => {
             const { spaceId, identifier } = request.params;
 
-            const location = await prisma.location.findFirst({
+            const location: Location | null = await prisma.location.findFirst({
                 where: {
                     space_id: spaceId,
-                    OR: [{ nfc_tag: identifier }, { qr_code: identifier }, { barcode: identifier }],
+                    OR: [{ location_reference_id: identifier }],
                 },
             });
 

@@ -1,6 +1,23 @@
 import { FastifyPluginAsync } from 'fastify';
 import prisma from '../../db/prisma';
+import type { Prisma } from '@prisma/client';
 import { createItemSchema, moveItemSchema, updateItemSchema } from '../../schemas';
+
+// Precise item payload with includes
+type ItemWithIncludes = Prisma.ItemGetPayload<{
+    include: {
+        location: true;
+        item_tags: { include: { tag: true } };
+    };
+}>; 
+
+// Payload type for item listing queries (location selected partially)
+type ItemListPayload = Prisma.ItemGetPayload<{
+    include: {
+        location: { select: { id: true; name: true; parent_location_id: true } };
+        item_tags: { include: { tag: { select: { id: true; name: true } } } };
+    };
+}>;
 
 // Reuse location path helper
 async function buildLocationPath(locationId: string): Promise<string> {
@@ -68,13 +85,13 @@ const itemRoutes: FastifyPluginAsync = async (server) => {
                 };
             }
 
-            const items = await prisma.item.findMany({
+            const items: ItemListPayload[] = await prisma.item.findMany({
                 where,
                 take: Number(limit),
                 skip: Number(offset),
                 include: {
                     location: {
-                        select: { id: true, name: true },
+                        select: { id: true, name: true, parent_location_id: true },
                     },
                     item_tags: {
                         include: {
@@ -89,11 +106,11 @@ const itemRoutes: FastifyPluginAsync = async (server) => {
 
             // Build paths and format response
             const itemsWithPaths = await Promise.all(
-                items.map(async (item) => ({
+                items.map(async (item: ItemListPayload) => ({
                     ...item,
                     location: {
                         ...item.location,
-                        path: await buildLocationPath(item.location.id),
+                        path: await buildLocationPath(item.location_id),
                     },
                     tags: item.item_tags.map((it) => it.tag),
                     item_tags: undefined, // Remove join table data
@@ -120,7 +137,7 @@ const itemRoutes: FastifyPluginAsync = async (server) => {
         async (request, reply) => {
             const { spaceId, itemId } = request.params;
 
-            const item = await prisma.item.findFirst({
+            const item: ItemWithIncludes | null = await prisma.item.findFirst({
                 where: {
                     id: itemId,
                     space_id: spaceId,
@@ -148,7 +165,7 @@ const itemRoutes: FastifyPluginAsync = async (server) => {
                 });
             }
 
-            const locationPath = await buildLocationPath(item.location.id);
+            const locationPath = await buildLocationPath(item.location_id);
 
             reply.send({
                 success: true,
@@ -174,7 +191,7 @@ const itemRoutes: FastifyPluginAsync = async (server) => {
             const item = await prisma.item.findFirst({
                 where: {
                     space_id: spaceId,
-                    OR: [{ nfc_tag: identifier }, { qr_code: identifier }, { barcode: identifier }],
+                    OR: [{ item_reference_id: identifier }],
                 },
                 include: {
                     location: true,

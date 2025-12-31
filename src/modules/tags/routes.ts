@@ -1,6 +1,12 @@
 import { FastifyPluginAsync } from 'fastify';
 import prisma from '../../db/prisma';
+import type { Prisma } from '@prisma/client';
 import { assignTagSchema, createTagSchema } from '../../schemas';
+
+// Tag payload with _count include
+type TagWithCount = Prisma.TagGetPayload<{
+    include: { _count: { select: { item_tags: true } } };
+}>;
 
 const tagRoutes: FastifyPluginAsync = async (server) => {
     // Create a tag
@@ -30,7 +36,7 @@ const tagRoutes: FastifyPluginAsync = async (server) => {
         async (request, reply) => {
             const { spaceId } = request.params;
 
-            const tags = await prisma.tag.findMany({
+            const tags: TagWithCount[] = await prisma.tag.findMany({
                 where: { space_id: spaceId },
                 include: {
                     _count: {
@@ -40,7 +46,7 @@ const tagRoutes: FastifyPluginAsync = async (server) => {
                 orderBy: { created_at: 'desc' },
             });
 
-            const tagsWithCount = tags.map((tag) => ({
+            const tagsWithCount = tags.map((tag: TagWithCount) => ({
                 id: tag.id,
                 name: tag.name,
                 color: tag.color,
